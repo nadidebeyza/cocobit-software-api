@@ -1,48 +1,34 @@
 const express = require('express');
-const cors = require('cors');
 const app = express();
 
-// Configure CORS
-app.use(cors());
-
-// Increase Node.js memory limit
-app.use(express.json({ 
-  limit: '100gb',
-  verify: (req, res, buf) => {
-    req.rawBody = buf;
-  }
-}));
-
-app.use(express.urlencoded({ 
-  limit: '100gb', 
-  extended: true 
-}));
-
-// Log request size
-app.use((req, res, next) => {
-  console.log('Request size:', req.headers['content-length']);
-  next();
-});
-
-// Handle all POST requests
+// Remove all middleware and handle raw requests
 app.post('*', (req, res) => {
-  let data = '';
+  const chunks = [];
   
-  req.on('data', chunk => {
-    data += chunk;
+  req.on('data', (chunk) => {
+    chunks.push(chunk);
   });
   
   req.on('end', () => {
     try {
-      const parsedData = JSON.parse(data);
+      const body = Buffer.concat(chunks);
+      const data = JSON.parse(body.toString());
       // Process your data here
       res.json({ success: true, message: 'Data received' });
     } catch (error) {
+      console.error('Error:', error);
       res.status(500).json({ error: 'Error processing request' });
     }
   });
   
   req.on('error', (error) => {
+    console.error('Request error:', error);
     res.status(500).json({ error: 'Error processing request' });
   });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 }); 
