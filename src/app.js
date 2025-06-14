@@ -1,7 +1,24 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 
-// Remove all other middleware and parsers
+// Configure CORS
+app.use(cors());
+
+// Increase Node.js memory limit
+app.use(express.json({ 
+  limit: '100gb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+
+app.use(express.urlencoded({ 
+  limit: '100gb', 
+  extended: true 
+}));
+
+// Log request size
 app.use((req, res, next) => {
   console.log('Request size:', req.headers['content-length']);
   next();
@@ -21,7 +38,7 @@ app.post('*', (req, res) => {
       // Process your data here
       res.json({ success: true, message: 'Data received' });
     } catch (error) {
-      res.status(400).json({ error: 'Invalid JSON' });
+      res.status(500).json({ error: 'Error processing request' });
     }
   });
   

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: your-app-name
+    env: node
+    buildCommand: npm install
+    startCommand: node src/app.js
+    envVars:
+      - key: NODE_OPTIONS
+        value: "--max-http-header-size=100000000" 
